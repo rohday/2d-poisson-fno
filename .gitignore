@@ -27,7 +27,6 @@ Thumbs.db
 
 # Checkpoints and Models
 checkpoints/
-allmodels/
 *.pth
 
 # Training History
