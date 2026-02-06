@@ -55,6 +55,14 @@ def train(args):
     total_params = sum(p.numel() for p in model.parameters() if p.requires_grad)
     print(f"Model parameters: {total_params}")
     
+    # Training speedup optimizations
+    if torch.cuda.is_available():
+        torch.backends.cudnn.benchmark = True  # Auto-tune convolutions
+        torch.backends.cuda.matmul.allow_tf32 = True  # TF32 for matmuls (Ada Lovelace)
+        torch.backends.cudnn.allow_tf32 = True  # TF32 for cuDNN
+    
+    # Note: torch.compile() disabled - doesn't support complex64 tensors in FFT
+    
     if args.dry_run:
         print("Dry Run: Generating synthetic data...")
         N, H, W = 16, 64, 64
@@ -101,9 +109,9 @@ def train(args):
         train_l2 = 0
         
         for batch_idx, (a, f, u) in enumerate(train_loader):
-            a, f, u = a.to(device), f.to(device), u.to(device)
+            a, f, u = a.to(device, non_blocking=True), f.to(device, non_blocking=True), u.to(device, non_blocking=True)
             
-            optimizer.zero_grad()
+            optimizer.zero_grad(set_to_none=True)  # Faster than zero_grad()
             out = model(a, f)
             loss = myloss(out, u)
             loss.backward()
@@ -159,10 +167,6 @@ def train(args):
                 if plotter.stop_requested: break
             
             if plotter.stop_requested: break
-            
-        if patience_counter >= args.patience:
-            print(f"\nEarly stopping at epoch {ep}! No improvement for {args.patience} epochs.")
-            break
     
     if plotter:
         plotter.save(f"{args.output_dir}/training_curve.png")
@@ -228,9 +232,9 @@ if __name__ == "__main__":
     parser.add_argument("--output_dir", type=str, default="checkpoints")
     parser.add_argument("--epochs", type=int, default=500)
     parser.add_argument("--learning_rate", type=float, default=1e-3)
-    parser.add_argument("--modes", type=int, default=12)
-    parser.add_argument("--width", type=int, default=32)
-    parser.add_argument("--depth", type=int, default=4)
+    parser.add_argument("--modes", type=int, default=16)
+    parser.add_argument("--width", type=int, default=48)
+    parser.add_argument("--depth", type=int, default=6)
     parser.add_argument("--batch_size", type=int, default=32)
     parser.add_argument("--dry-run", action="store_true", help="Run with synthetic data")
     parser.add_argument("--plot", action="store_true", help="Show live training dashboard")

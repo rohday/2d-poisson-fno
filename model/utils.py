@@ -27,7 +27,7 @@ class GaussianNormalizer:
         self.std = self.std.cpu()
 
 
-def load_data(data_path, batch_size=32, num_workers=4):
+def load_data(data_path, batch_size=32, num_workers=2):
     """Load .npz dataset. Returns DataLoader and shapes."""
     if not os.path.exists(data_path):
         raise FileNotFoundError(f"Data not found: {data_path}")
