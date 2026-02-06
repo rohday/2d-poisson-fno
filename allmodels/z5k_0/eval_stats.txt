@@ -1,5 +1,7 @@
+Total Parameters: 1,188,321
+
 Average Relative L2 Error: 0.06453
-Accuracy: 93.55% (Approx)
+Accuracy: ~93.55% 
 
 ----------------------------------------
 FNO Model Performance Benchmark

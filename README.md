@@ -10,10 +10,10 @@ cd data_generation
 python3 generate_dataset.py --train_samples 1000 --val_samples 200 --test_samples 200 --output ../data/
 
 # Train
-python3 model/train.py --data_path data/train.npz --epochs 100 --output_dir checkpoints/
+python3 -m model.train --data_path data/train.npz --epochs 300 --output_dir checkpoints/ --learning_rate 1e-2
 
-# Evaluate
-python3 model/evaluate.py --checkpoint checkpoints/ --data_path data/test.npz
+# Evaluate (this happens on its own during training)
+python3 -m model.evaluate --checkpoint checkpoints/ --data_path data/test.npz
 ```
 
 ## Structure

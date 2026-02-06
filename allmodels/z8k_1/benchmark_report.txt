@@ -1,9 +1,7 @@
-FNO Throughput Test Report
+FNO Throughput Test
 Checkpoint: checkpoints
-Data: data/val.npz
-Window: Sample 50 to 250
+benchmarks/val.npz
 
-Total Time:  0.1690 s
+Time:  0.1690 s
 Throughput:  1183.45 sample/s
-Avg Latency: 0.8450 ms
-RAM Growth:  261.6250 MB
+Latency: 0.8450 ms
