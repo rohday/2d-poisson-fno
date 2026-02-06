@@ -44,3 +44,44 @@ class SpectralConv2d(nn.Module):
         x = torch.fft.irfft2(out_ft, s=(x.size(-2), x.size(-1)), norm='ortho')
         
         return x
+
+
+class DepthwiseSpectralConv2d(nn.Module):
+    """Depthwise 2D Fourier layer - per-channel frequency filtering (no cross-channel mixing)."""
+    
+    def __init__(self, channels, modes_x, modes_y):
+        super().__init__()
+        self.channels = channels
+        self.modes_x = modes_x
+        self.modes_y = modes_y
+
+        scale = 1 / channels
+        
+        # Per-channel weights for positive/negative x frequencies
+        # Shape: (C, modes_x, modes_y) instead of (C, C, modes_x, modes_y)
+        self.weights1 = nn.Parameter(
+            scale * torch.randn(channels, modes_x, modes_y, dtype=torch.cfloat)
+        )
+        self.weights2 = nn.Parameter(
+            scale * torch.randn(channels, modes_x, modes_y, dtype=torch.cfloat)
+        )
+
+    def forward(self, x):
+        batchsize = x.shape[0]
+        
+        x_ft = torch.fft.rfft2(x, norm='ortho')
+
+        out_ft = torch.zeros(batchsize, self.channels, x.size(-2), x.size(-1) // 2 + 1, 
+                             dtype=torch.cfloat, device=x.device)
+        
+        # Depthwise: element-wise multiply each channel with its own filter
+        # "bcxy, cxy -> bcxy" (no sum over channels!)
+        out_ft[:, :, :self.modes_x, :self.modes_y] = \
+            x_ft[:, :, :self.modes_x, :self.modes_y] * self.weights1
+
+        out_ft[:, :, -self.modes_x:, :self.modes_y] = \
+            x_ft[:, :, -self.modes_x:, :self.modes_y] * self.weights2
+
+        x = torch.fft.irfft2(out_ft, s=(x.size(-2), x.size(-1)), norm='ortho')
+        
+        return x
